@@ -54,17 +54,18 @@ def pool_price_fun(sim, veh, request, sp):
             else:
                 # select by max profit
                 if kpi_type == 1:
+                    print("Profit Maximization")
                     my_choice = still_available_rides[still_available_rides["profit"]==still_available_rides["profit"].max()].squeeze() 
                 
-                # select by max profit on pooled rides
+                # select by max pooled rides
                 elif kpi_type == 2:
-                    rf = still_available_rides[(still_available_rides['indexes_orig'].map(len) == 1)]
+                    print("Pooled rides")
+                    rf = still_available_rides[(still_available_rides['indexes_orig'].map(len) > 1)]
                     my_choice = rf[rf['profit']==rf['profit'].max()].iloc[0]
-                    
                 # select by max profit on private rides
                 elif kpi_type == 3:
-                    print("hell")
-                    rf = still_available_rides[(still_available_rides['indexes_orig'].map(len) > 1)]
+                    print("private rides")
+                    rf = still_available_rides[(still_available_rides['indexes_orig'].map(len) == 1)]
                     my_choice = rf[rf['profit']==rf['profit'].max()].iloc[0]
                 
                 

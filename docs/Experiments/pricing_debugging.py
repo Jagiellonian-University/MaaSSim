@@ -21,9 +21,9 @@ import ExMAS
 params = get_config('D:/Development/MaaSSim/data/config/delft.json')  # load configuration
 
 params.times.pickup_patience = 3600 # 1 hour of simulation
-params.simTime = 4 # 6 minutes hour of simulation
-params.nP = 400 # reuqests (and passengers)
-params.nV = 20 # vehicles
+params.simTime = 1 # 6 minutes hour of simulation
+params.nP = 100 # reuqests (and passengers)
+params.nV = 5 # vehicles
 
 params.t0 = pd.Timestamp.now()
 params.shareability.avg_speed = params.speeds.ride
@@ -63,47 +63,7 @@ print("MaaSSIm Simulation Begins")
 
 # Profit Maximization 
 
-params.kpi = 1
 
-sim = simulate(params = params, inData = inData, logger_level = logging.WARNING) # simulate
-
-sim.res[0].veh_exp['REVENUE'].to_list()
-
-print(sim.res[0].veh_exp['REVENUE'].to_list())
-
-sim.res[0].all_kpi # All driver revenue 
-
-print(sim.res[0])
-
-# Solo ride-hailing
-
-params.kpi = 2
-
-sim = simulate(params = params, inData = inData, logger_level = logging.WARNING) # simulate
-
-sim.res[0].veh_exp['REVENUE'].to_list()
-
-print(sim.res[0].veh_exp['REVENUE'].to_list())
-
-
-sim.res[0].all_kpi # All driver revenue 
-
-print(sim.res[0])
-
-
-# Nearest pickup ride-pooling
-
-params.kpi = 3
-
-sim = simulate(params = params, inData = inData, logger_level = logging.WARNING) # simulate
-
-sim.res[0].veh_exp['REVENUE'].to_list()
-
-print(sim.res[0].veh_exp['REVENUE'].to_list())
-
-total = sim.res[0].all_kpi # All driver revenue 
-
-print(total)
 
 
 responses = []
@@ -112,7 +72,9 @@ idle_time = []
 
 for i in range(1, 4):
     params.kpi = i
-    sim = simulate(params = params, inData = inData, logger_level = logging.WARNING) # simulate
+    sim = simulate(params = params, inData = inData, logger_level = logging.CRITICAL) # simulate
+    sim.res[0].veh_kpi.to_csv('D:/Development/GitHub-ProjectV2.0/MaaSSim/docs/tutorials/Results/veh{}.csv'.format(i))
+    sim.res[0].pax_kpi.to_csv('D:/Development/GitHub-ProjectV2.0/MaaSSim/docs/tutorials/Results/pax{}.csv'.format(i))
     sim.res[0].veh_exp['Vehicles'] = sim.res[0].veh_exp.index
     sim.res[0].veh_exp['ds'] = f"{i}"
     
@@ -121,7 +83,6 @@ for i in range(1, 4):
 vehicles = sim.res[0].veh_exp.loc[sim.res[0].veh_exp["nRIDES"] > 0]
 no_of_veh = len(vehicles)
     
-avg_kpi.append(sim.res[0].all_kpi/no_of_veh)
-idle_time.append(vehicles['IDLE'].sum()/no_of_veh)
+
 
 
