@@ -46,5 +46,5 @@ for folder in folders:
 # Create a new CSV file with the column sums and "REVENUE" as the row name
 with open("revenue.csv", "w", newline="") as f:
     writer = csv.writer(f)
-    writer.writerow(["","veh1", "veh2", "veh3"])
+    writer.writerow(["","Prift Maximization", "Pooled Ride", "Private Ride"])
     writer.writerow(["REVENUE",sums["veh1"], sums["veh2"], sums["veh3"]])
