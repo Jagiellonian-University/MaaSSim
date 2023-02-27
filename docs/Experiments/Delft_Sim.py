@@ -25,7 +25,7 @@ import ExMAS
 
 # In[2]:
 
-
+#params
 params = get_config('D:/Development/MaaSSim/data/config/delft.json')  # load configuration
 
 params.times.pickup_patience = 3600 # 1 hour of simulation
