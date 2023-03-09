@@ -22,7 +22,7 @@ params = get_config('D:/Development/MaaSSim/data/config/delft.json')  # load con
 
 params.times.pickup_patience = 3600 # 1 hour of simulation
 params.simTime = 1 # 6 minutes hour of simulation
-params.nP = 100 # reuqests (and passengers)
+params.nP = 200 # reuqests (and passengers)
 params.nV = 5 # vehicles
 
 params.t0 = pd.Timestamp.now()
@@ -83,6 +83,6 @@ for i in range(1, 4):
 vehicles = sim.res[0].veh_exp.loc[sim.res[0].veh_exp["nRIDES"] > 0]
 no_of_veh = len(vehicles)
     
-
+print('simulation end')
 
 

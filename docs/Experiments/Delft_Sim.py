@@ -29,9 +29,9 @@ import ExMAS
 params = get_config('D:/Development/MaaSSim/data/config/delft.json')  # load configuration
 
 params.times.pickup_patience = 3600 # 1 hour of simulation
-params.simTime = 1 # 6 minutes hour of simulation
-params.nP = 100 # reuqests (and passengers)
-params.nV = 5 # vehicles
+params.simTime = 1 # 1 hour of simulation
+params.nP = 400 # reuqests (and passengers)
+params.nV = 40 # vehicles
 #params.kpi = 1
 
 
@@ -105,8 +105,8 @@ idle_time = []
 for i in range(1, 4):
     params.kpi = i
     sim = simulate(params = params, inData = inData) # simulate
-    sim.res[0].veh_kpi.to_csv('D:/Development/GitHub-ProjectV2.0/MaaSSim/docs/tutorials/Results/veh{}.csv'.format(i))
-    sim.res[0].pax_kpi.to_csv('D:/Development/GitHub-ProjectV2.0/MaaSSim/docs/tutorials/Results/pax{}.csv'.format(i))
+    sim.res[0].veh_kpi.to_csv('D:/Development/GitHub-ProjectV2.0/MaaSSim/docs/tutorials/Results/Simulation/veh{}.csv'.format(i))
+    sim.res[0].pax_kpi.to_csv('D:/Development/GitHub-ProjectV2.0/MaaSSim/docs/tutorials/Results/Simulation/pax{}.csv'.format(i))
     #['Vehicles'] = sim.res[0].veh_exp.index
     sim.res[0].veh_exp['ds'] = f"{i}"
     
