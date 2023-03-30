@@ -81,7 +81,7 @@ sns.displot(df.REVENUE)
 
 plt.show()
 
-# Profit Maximization revbbb
+# Profit Maximization revenue 
 
 
 
