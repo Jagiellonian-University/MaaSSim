@@ -75,6 +75,7 @@ sim.res[0].pax_exp
 df = sim.res[0].veh_exp
 
 df
+# coloar 
 
 sns.displot(df.REVENUE)
 
