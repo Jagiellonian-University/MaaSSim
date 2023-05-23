@@ -52,7 +52,7 @@ def kpi_pax(*args,**kwargs):
 
 def kpi_veh(*args, **kwargs):
     """
-    calculate vehicle KPIs (global and individual)
+    calculate vehicle KPIs (global and individual) bb
     it bases of duration of each event.
     The time per each event denotes the time spent by vehicle BEFORE that event took place.
     From this we can interpret duration of each segments.
