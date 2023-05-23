@@ -53,7 +53,7 @@ def pool_price_fun(sim, veh, request, sp):
                 
                 my_choice = still_available_rides.sample(1,weights='probability')
             else:
-                # select by max profit
+                # select by max profit kkkk
                 if kpi_type == 1:
                     print("Profit Maximization")
                     my_choice = still_available_rides[still_available_rides["profit"]==still_available_rides["profit"].max()].squeeze() 
