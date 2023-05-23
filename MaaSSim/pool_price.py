@@ -43,7 +43,8 @@ def pool_price_fun(sim, veh, request, sp):
             
             still_available_rides["operating_cost"] = still_available_rides["trav_dist"].apply(lambda x : x*sp.operating_cost)
             still_available_rides["profit"] = still_available_rides["driver_revenue"] - still_available_rides["operating_cost"]
-            
+            still_available_rides['commission'] = still_available_rides.apply(lambda row: row.fare*sp.comm_rate, axis=1)
+           
             if sp.get('probabilistic',False):
                 mu = sp.get('choice_mu',0.3)
                 still_available_rides['u']= np.exp(mu*still_available_rides.proft)

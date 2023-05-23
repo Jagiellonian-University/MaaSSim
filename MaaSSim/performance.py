@@ -44,7 +44,7 @@ def kpi_pax(*args,**kwargs):
     ret['WAIT'] = ret['RECEIVES_OFFER'] + ret[
         'MEETS_DRIVER_AT_PICKUP']  # time waiting for traveller (by default zero)
     ret['OPERATIONS'] = ret['ACCEPTS_OFFER'] + ret['DEPARTS_FROM_PICKUP'] + ret['SETS_OFF_FOR_DEST']
-
+    ret['LOST_PATIENCE'] = ret.apply(lambda row: False if row['ARRIVES_AT_DROPOFF']>0 else True ,axis=1)
     kpi = ret.agg(['sum', 'mean', 'std'])
     kpi['nP'] = ret.shape[0]
     return {'pax_exp': ret, 'pax_kpi': kpi}
@@ -94,11 +94,13 @@ def kpi_veh(*args, **kwargs):
     ret['CRUISE'] = ret['ARRIVES_AT_PICKUP'] + ret['REPOSITIONED']  # time to arrive for traveller
     ret['OPERATIONS'] = ret['ACCEPTS_REQUEST'] + ret['DEPARTS_FROM_PICKUP'] + ret['IS_ACCEPTED_BY_TRAVELLER']
     ret['IDLE'] = ret['ENDS_SHIFT'] - ret['OPENS_APP'] - ret['OPERATIONS'] - ret['CRUISE'] - ret['WAIT'] - ret['TRAVEL']
-
+    
     ret['PAX_KM'] = ret.apply(lambda x: sim.inData.requests.loc[sim.runs[0].trips[
         sim.runs[0].trips.veh_id == x.name].pax.unique()].dist.sum() / 1000, axis=1)
 #     ret.apply(lambda x: print(sim.inData.platforms.loc[sim.inData.vehicles.loc[x.name].platform]))
 #     print(sim.inData.platforms.loc[sim.inData.vehicles.loc['name'].platform])
+    
+           
     
     
     rides = sim.inData.sblts.rides
@@ -123,6 +125,9 @@ def kpi_veh(*args, **kwargs):
     
     ret.index.name = 'veh'
     total_rev = ret['REVENUE'].sum()
+    
+    
+    
 # This is a code for plotting
 #plotting seaborn
     # plot graph of driver revenue
