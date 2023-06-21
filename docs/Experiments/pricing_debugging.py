@@ -76,7 +76,7 @@ print("MaaSSIm Simulation Begins")
 responses = []
 avg_kpi = []
 idle_time = []
-
+# Ranges 
 for i in range(3, 4):
     params.kpi = i
     sim = simulate(params = params, inData = inData, logger_level = logging.WARNING) # simulate
