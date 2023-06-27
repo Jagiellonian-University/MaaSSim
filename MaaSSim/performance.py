@@ -98,7 +98,7 @@ def kpi_veh(*args, **kwargs):
     ret['PAX_KM'] = ret.apply(lambda x: sim.inData.requests.loc[sim.runs[0].trips[
         sim.runs[0].trips.veh_id == x.name].pax.unique()].dist.sum() / 1000, axis=1)
 #     ret.apply(lambda x: print(sim.inData.platforms.loc[sim.inData.vehicles.loc[x.name].platform]))
-#     print(sim.inData.platforms.loc[sim.inData.vehicles.loc['name'].platform]) data 
+#     print(sim.inData.platforms.loc[sim.inData.vehicles.loc['name'].platform]) data fafa
     
            
     
