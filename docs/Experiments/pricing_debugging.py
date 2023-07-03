@@ -22,8 +22,8 @@ params = get_config('D:/Development/MaaSSim/data/config/delft.json')  # load con
 
 params.times.pickup_patience = 3600 # 1 hour of simulation
 params.simTime = 4 # 6 minutes hour of simulation
-params.nP = 100 # reuqests (and passengers)
-params.nV = 10 # vehicles
+params.nP = 200 # reuqests (and passengers)
+params.nV = 20 # vehicles
 
 params.t0 = pd.Timestamp.now()
 params.shareability.avg_speed = params.speeds.ride
@@ -57,13 +57,16 @@ params.shareability.without_matching = True
 
 
 
+
+
 inData = ExMAS.main(inData, params.shareability, plot=False) # create shareability graph (ExMAS) 
 
 print("MaaSSIm Simulation Begins")  
 
+inData = prep_shared_rides(inData, params.shareability) # prepare schedules
 # Profit Maximization 
 
-
+inData.sblts.rides
 
 # Solo ride-hailing
 
@@ -77,18 +80,18 @@ responses = []
 avg_kpi = []
 idle_time = []
 # Ranges 
-for i in range(1, 2):
+for i in range(1, 4):
     params.kpi = i
-    sim = simulate(params = params, inData = inData, logger_level = logging.WARNING) # simulate
+    sim = simulate(params = params, inData = inData, logger_level = logging.CRITICAL) # simulate
     sim.res[0].veh_kpi.to_csv('D:/Development/GitHub-ProjectV2.0/MaaSSim/docs/tutorials/Results/Simulation/Driver/veh{}.csv'.format(i))
     sim.res[0].pax_kpi.to_csv('D:/Development/GitHub-ProjectV2.0/MaaSSim/docs/tutorials/Results/Simulation/Driver/pax{}.csv'.format(i))
-    sim.res[0].veh_exp['Vehicles'] = sim.res[0].veh_exp.index
-    sim.res[0].veh_exp['ds'] = f"{i}"
+   # sim.res[0].veh_exp['Vehicles'] = sim.res[0].veh_exp.index
+   # sim.res[0].veh_exp['ds'] = f"{i}"
     
-    responses.append(sim.res[0].veh_exp)
+    #responses.append(sim.res[0].veh_exp)
     
-vehicles = sim.res[0].veh_exp.loc[sim.res[0].veh_exp["nRIDES"] > 0]
-no_of_veh = len(vehicles)
+#vehicles = sim.res[0].veh_exp.loc[sim.res[0].veh_exp["nRIDES"] > 0]
+#no_of_veh = len(vehicles)
     
 #avg_kpi.append(sim.res[0].all_kpi/no_of_veh)
 #idle_time.append(vehicles['IDLE'].sum()/no_of_veh)
