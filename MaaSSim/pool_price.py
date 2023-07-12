@@ -7,18 +7,19 @@
 import numpy as np
 import os
 import json 
+import pandas as pd
 
 def pool_price_fun(sim, veh, request, sp):
     kpi_type = sim.params.kpi
     print(sp.operating_cost)
 
 
-    # Added function
+    # Added
     # function used inside the f_match to update the choice of the driver (pool/single)
 
     logger = sim.logger.critical # set what do you wantto see from the logger
     
-    if len(request.rides)>1: # only if there is a choice
+    if len(request.rides)>0: # only if there is a choice
         logger('this is request {} with {} available rides.'.format(request.pax_id, request.rides))
         available_rides = sim.inData.sblts.rides.loc[request.rides] # this is set in shared.py
         still_available_rides = list()
@@ -30,7 +31,7 @@ def pool_price_fun(sim, veh, request, sp):
                 logger("ride {} not available {}".format(ride.name, [sim.pax[_].pax.event.value for _ in ride.indexes]))
         logger('this is reuqest {} with {} still available rides.'.format(request.pax_id, still_available_rides))
 
-        if len(still_available_rides)>1: # only if we still have a choice
+        if len(still_available_rides)>0: # only if we still have a choice
             
             still_available_rides = sim.inData.sblts.rides.loc[still_available_rides]
             
@@ -43,8 +44,7 @@ def pool_price_fun(sim, veh, request, sp):
             
             still_available_rides["operating_cost"] = still_available_rides["trav_dist"].apply(lambda x : x*sp.operating_cost)
             still_available_rides["profit"] = still_available_rides["driver_revenue"] - still_available_rides["operating_cost"]
-            still_available_rides['commission'] = still_available_rides.apply(lambda row: row.fare*sp.comm_rate, axis=1)
-           
+            
             if sp.get('probabilistic',False):
                 mu = sp.get('choice_mu',0.3)
                 still_available_rides['u']= np.exp(mu*still_available_rides.proft)
@@ -53,23 +53,30 @@ def pool_price_fun(sim, veh, request, sp):
                 
                 my_choice = still_available_rides.sample(1,weights='probability')
             else:
-                # select by max profit kkkk
+                # select by max profit
                 if kpi_type == 1:
-                    print("Profit Maximization")
                     my_choice = still_available_rides[still_available_rides["profit"]==still_available_rides["profit"].max()].squeeze() 
+                    # print(my_choice)
+                    #ride = my_choice
+                    ride = still_available_rides[still_available_rides["profit"]==still_available_rides["profit"].max()]
                 
-                # select by max pooled rides
+                # select by max profit on solo rides !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 elif kpi_type == 2:
-                    print("Pooled rides")
-                    rf = still_available_rides[(still_available_rides['indexes_orig'].map(len) > 1)]
-                    my_choice = rf[rf['profit']==rf['profit'].max()].iloc[0]
-                # select by max profit on private rides
-                elif kpi_type == 3:
-                    print("private rides")
                     rf = still_available_rides[(still_available_rides['indexes_orig'].map(len) == 1)]
                     my_choice = rf[rf['profit']==rf['profit'].max()].iloc[0]
+                    ride = rf[rf['profit']==rf['profit'].max()].iloc[0]
+                    
+                # select by max profit on pooled rides !!!!!!!!!!!!!!!!!!!!!!!!!
+                elif kpi_type == 3:
+                    print("hell")
+                   # rf = still_available_rides[(still_available_rides['indexes_orig'].map(len) > 1)]
+                    rf = still_available_rides[(still_available_rides['indexes_orig'].map(len) > 1)]
+                    my_choice = rf[rf['profit']==rf['profit'].max()].iloc[0]
+                    ride = rf[rf['profit']==rf['profit'].max()].iloc[0]
+                        
+                veh.rdf = pd.concat([veh.rdf, ride])
                 
-                
+              # There are two problems here: 1- even if there is one choice the whole code should run because we calculate profit here and we need it for kpi functions. 2- storing the choices in veh.rdf we can see that divers are not following it (BIG PROBLEM).
             
             
             logger('vehicle {} has {} choices'.format(veh.id,len(still_available_rides)))

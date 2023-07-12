@@ -22,8 +22,8 @@ params = get_config('D:/Development/MaaSSim/data/config/delft.json')  # load con
 
 params.times.pickup_patience = 3600 # 1 hour of simulation
 params.simTime = 4 # 6 minutes hour of simulation
-params.nP = 200 # reuqests (and passengers)
-params.nV = 20 # vehicles
+params.nP = 100 # reuqests (and passengers)
+params.nV = 50 # vehicles
 
 params.t0 = pd.Timestamp.now()
 params.shareability.avg_speed = params.speeds.ride
@@ -80,7 +80,7 @@ responses = []
 avg_kpi = []
 idle_time = []
 # Ranges 
-for i in range(1, 4):
+for i in range(1, 2):
     params.kpi = i
     sim = simulate(params = params, inData = inData, logger_level = logging.CRITICAL) # simulate
     sim.res[0].veh_kpi.to_csv('D:/Development/GitHub-ProjectV2.0/MaaSSim/docs/tutorials/Results/Simulation/Driver/veh{}.csv'.format(i))

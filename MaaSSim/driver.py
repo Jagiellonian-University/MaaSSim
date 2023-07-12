@@ -6,6 +6,7 @@
 
 from enum import Enum
 import time
+import pandas as pd
 
 
 class driverEvent(Enum):
@@ -44,7 +45,8 @@ class VehicleAgent(object):
         self.veh = self.sim.vehicles.loc[veh_id].copy()  # copy of inData vehicle data
         self.platform_id = self.veh.platform  # id of a platform
         self.platform = self.sim.plats[self.platform_id]  # reference to the platform
-
+        self.rdf = pd.DataFrame()
+        
         # local variables
         self.paxes = list()
         self.schedule = None  # schedule served by vehicle (single request for case of non-shared rides)
@@ -63,7 +65,7 @@ class VehicleAgent(object):
         # main action
         self.action = self.sim.env.process(self.loop_day())  # main process in simu
 
-    def update(self, event=None, pos=None, db_update=True):
+    def update(self, event=None, pos=None, db_update=True, paxes=None):
         # call whenever pos or event of vehicle changes
         # keeping consistency with DB during simulation
         if event:
@@ -72,16 +74,20 @@ class VehicleAgent(object):
             self.veh.pos = pos  # update position
         if db_update:
             self.sim.vehicles.loc[self.id] = self.veh
-        self.append_ride()
+        self.append_ride(paxes=paxes)
 
-    def append_ride(self):
+    def append_ride(self, paxes=None):
         """ appends current event in time and space to the log of vehicle rides """
         ride = dict()
         ride['veh'] = self.id
         ride['pos'] = self.veh.pos
         ride['t'] = self.sim.env.now
         ride['event'] = self.veh.event.name
-        ride['paxes'] = list(self.paxes)  # None if self.request is None else self.request.name
+        
+        if ride['event'] in ['IS_ACCEPTED_BY_TRAVELLER']:
+            ride['paxes'] = [paxes]
+        else:
+            ride['paxes'] = list(self.paxes)  # None if self.request is None else self.request.name
         self.myrides.append(ride)
 
         self.disp()
