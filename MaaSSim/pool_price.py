@@ -64,7 +64,7 @@ def pool_price_fun(sim, veh, request, sp):
                 elif kpi_type == 2:
                     rf = still_available_rides[(still_available_rides['indexes_orig'].map(len) == 1)]
                     my_choice = rf[rf['profit']==rf['profit'].max()].iloc[0]
-                    ride = rf[rf['profit']==rf['profit'].max()].iloc[0]
+                    ride = rf[rf['profit']==rf['profit'].max()]
                     
                 # select by max profit on pooled rides !!!!!!!!!!!!!!!!!!!!!!!!!
                 elif kpi_type == 3:
@@ -72,7 +72,7 @@ def pool_price_fun(sim, veh, request, sp):
                    # rf = still_available_rides[(still_available_rides['indexes_orig'].map(len) > 1)]
                     rf = still_available_rides[(still_available_rides['indexes_orig'].map(len) > 1)]
                     my_choice = rf[rf['profit']==rf['profit'].max()].iloc[0]
-                    ride = rf[rf['profit']==rf['profit'].max()].iloc[0]
+                    ride = rf[rf['profit']==rf['profit'].max()]
                         
                 veh.rdf = pd.concat([veh.rdf, ride])
                 
