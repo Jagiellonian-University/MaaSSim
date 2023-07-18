@@ -80,7 +80,7 @@ responses = []
 avg_kpi = []
 idle_time = []
 # Ranges 
-for i in range(1, 2):
+for i in range(1, 4):
     params.kpi = i
     sim = simulate(params = params, inData = inData, logger_level = logging.CRITICAL) # simulate
     sim.res[0].veh_kpi.to_csv('D:/Development/GitHub-ProjectV2.0/MaaSSim/docs/tutorials/Results/Simulation/Driver/veh{}.csv'.format(i))
