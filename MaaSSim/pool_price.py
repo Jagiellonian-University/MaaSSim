@@ -74,7 +74,7 @@ def pool_price_fun(sim, veh, request, sp):
                     my_choice = rf[rf['profit']==rf['profit'].max()]
                     ride = rf[rf['profit']==rf['profit'].max()]
                         
-                veh.rdf = pd.concat([veh.rdf, ride])
+                veh.rdf = pd.concat([veh.rdf, ride]) #rides of the data
                 
               # There are two problems here: 1- even if there is one choice the whole code should run because we calculate profit here and we need it for kpi functions. 2- storing the choices in veh.rdf we can see that divers are not following it (BIG PROBLEM).
             
