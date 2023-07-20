@@ -57,7 +57,7 @@ def pool_price_fun(sim, veh, request, sp):
                 if kpi_type == 1:
                     my_choice = still_available_rides[still_available_rides["profit"]==still_available_rides["profit"].max()].squeeze() 
                     # print(my_choice)
-                    #ride = my_choice
+                    # ride = my_choice
                     ride = still_available_rides[still_available_rides["profit"]==still_available_rides["profit"].max()]
                 
                 # select by max profit on solo rides !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -69,12 +69,11 @@ def pool_price_fun(sim, veh, request, sp):
                 # select by max profit on pooled rides !!!!!!!!!!!!!!!!!!!!!!!!!
                 elif kpi_type == 3:
                     print("hell")
-                   # rf = still_available_rides[(still_available_rides['indexes_orig'].map(len) > 1)]
                     rf = still_available_rides[(still_available_rides['indexes_orig'].map(len) > 1)]
-                    my_choice = rf[rf['profit']==rf['profit'].max()]
+                    my_choice = rf[rf['profit']==rf['profit'].max()].iloc[0]
                     ride = rf[rf['profit']==rf['profit'].max()]
                         
-                veh.rdf = pd.concat([veh.rdf, ride]) #rides of the data
+                veh.rdf = pd.concat([veh.rdf, ride])
                 
               # There are two problems here: 1- even if there is one choice the whole code should run because we calculate profit here and we need it for kpi functions. 2- storing the choices in veh.rdf we can see that divers are not following it (BIG PROBLEM).
             
