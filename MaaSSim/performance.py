@@ -187,50 +187,51 @@ def kpi_pax_pricing(*args,**kwargs):
     
 
     
-    def kpi_veh_pricing(*args, **kwargs):
-        sim =  kwargs.get('sim', None)
-        run_id = kwargs.get('run_id', None)
-        simrun = sim.runs[run_id]
-        vehindex = sim.inData.vehicles.index
-        df = simrun['rides'].copy()  # results of previous simulation
-        DECIDES_NOT_TO_DRIVE = df[df.event == driverEvent.DECIDES_NOT_TO_DRIVE.name].veh  # track drivers out
-        dfs = df.shift(-1)  # to map time periods between events
-        dfs.columns = [_ + "_s" for _ in df.columns]  # columns with _s are shifted
-        df = pd.concat([df, dfs], axis=1)  # now we have time periods
-        df = df[df.veh == df.veh_s]  # filter for the same vehicles only
-        df = df[~(df.t == df.t_s)]  # filter for positive time periods only
-        df['dt'] = df.t_s - df.t  # make time intervals
-        ret = df.groupby(['veh', 'event_s'])['dt'].sum().unstack()  # aggreagted by vehicle and event
-        ret.columns.name = None
-        ret = ret.reindex(vehindex)  # update for vehicles with no record
-        ret['nRIDES'] = df[df.event == driverEvent.ARRIVES_AT_DROPOFF.name].groupby(
-            ['veh']).size().reindex(ret.index)
+def kpi_veh_pricing(*args, **kwargs):
+    sim =  kwargs.get('sim', None)
+    run_id = kwargs.get('run_id', None)
+    simrun = sim.runs[run_id]
+    params = sim.params
+    vehindex = sim.inData.vehicles.index
+    df = simrun['rides'].copy()  # results of previous simulation
+    DECIDES_NOT_TO_DRIVE = df[df.event == driverEvent.DECIDES_NOT_TO_DRIVE.name].veh  # track drivers out
+    dfs = df.shift(-1)  # to map time periods between events
+    dfs.columns = [_ + "_s" for _ in df.columns]  # columns with _s are shifted
+    df = pd.concat([df, dfs], axis=1)  # now we have time periods
+    df = df[df.veh == df.veh_s]  # filter for the same vehicles only
+    df = df[~(df.t == df.t_s)]  # filter for positive time periods only
+    df['dt'] = df.t_s - df.t  # make time intervals
+    ret = df.groupby(['veh', 'event_s'])['dt'].sum().unstack()  # aggreagted by vehicle and event
+    ret.columns.name = None
+    ret = ret.reindex(vehindex)  # update for vehicles with no record
+    ret['nRIDES'] = df[df.event == driverEvent.ARRIVES_AT_DROPOFF.name].groupby(
+        ['veh']).size().reindex(ret.index)
 
-        for status in driverEvent:
-            if status.name not in ret.columns:
-                ret[status.name] = 0  # cover all statuss
+    for status in driverEvent:
+        if status.name not in ret.columns:
+            ret[status.name] = 0  # cover all statuss
 
-        DECIDES_NOT_TO_DRIVE.index = DECIDES_NOT_TO_DRIVE.values
-        ret['OUT'] = DECIDES_NOT_TO_DRIVE
-        ret['OUT'] = ~ret['OUT'].isnull()
-        # ret['PICKUP_DIST'] = ret.ARRIVES_AT_PICKUP*(params.speeds.ride/1000) # in km
-        ret['DRIVING_TIME'] = ret.ARRIVES_AT_PICKUP + ret.ARRIVES_AT_DROPOFF
-        ret['DRIVING_DIST'] = ret['DRIVING_TIME']*(params.speeds.ride/1000) 
+    DECIDES_NOT_TO_DRIVE.index = DECIDES_NOT_TO_DRIVE.values
+    ret['OUT'] = DECIDES_NOT_TO_DRIVE
+    ret['OUT'] = ~ret['OUT'].isnull()
+    # ret['PICKUP_DIST'] = ret.ARRIVES_AT_PICKUP*(params.speeds.ride/1000) # in km
+    ret['DRIVING_TIME'] = ret.ARRIVES_AT_PICKUP + ret.ARRIVES_AT_DROPOFF
+    ret['DRIVING_DIST'] = ret['DRIVING_TIME']*(params.speeds.ride/1000) 
 
-        ret = ret[['nRIDES', 'OUT'] + [_.name for _ in driverEvent]].fillna(0)  # nans become 0
+    ret = ret[['nRIDES', 'OUT'] + [_.name for _ in driverEvent]].fillna(0)  # nans become 0
 
-        ret['REVENUE'] = ret.apply(lambda row: sim.vehs[row.name].rdf.driver_revenue.sum(), axis=1)
-        ret['COMMISSION'] = ret.apply(lambda row: sim.vehs[row.name].rdf.commission.sum(), axis=1)
-        ret['COST'] = ret.apply(lambda row: sim.vehs[row.name].rdf.operating_cost.sum(), axis=1)
-        ret['PROFIT'] = ret.apply(lambda row: sim.vehs[row.name].rdf.profit.sum(), axis=1)
-        ret['trav_dist'] = ret.apply(lambda row: sim.vehs[row.name].rdf.trav_dist.sum(), axis=1)
-        
-        ret = ret[['nRIDES', 'DRIVING_TIME', 'DRIVING_DIST', 'REVENUE', 'COMMISSION', 'COST', 'PROFIT'] + [_.name for _ in driverEvent]]
-            
-        kpi = ret.agg(['sum', 'mean', 'std'])
-        kpi['nV'] = ret.shape[0]
-        
-        return {'veh_exp': ret, 'veh_kpi': kpi}
+    ret['REVENUE'] = ret.apply(lambda row: sim.vehs[row.name].rdf.driver_revenue.sum(), axis=1)
+    ret['COMMISSION'] = ret.apply(lambda row: sim.vehs[row.name].rdf.commission.sum(), axis=1)
+    ret['COST'] = ret.apply(lambda row: sim.vehs[row.name].rdf.operating_cost.sum(), axis=1)
+    ret['PROFIT'] = ret.apply(lambda row: sim.vehs[row.name].rdf.profit.sum(), axis=1)
+    ret['trav_dist'] = ret.apply(lambda row: sim.vehs[row.name].rdf.trav_dist.sum(), axis=1)
+
+    ret = ret[['nRIDES', 'DRIVING_TIME', 'DRIVING_DIST', 'REVENUE', 'COMMISSION', 'COST', 'PROFIT'] + [_.name for _ in driverEvent]]
+
+    kpi = ret.agg(['sum', 'mean', 'std'])
+    kpi['nV'] = ret.shape[0]
+
+    return {'veh_exp': ret, 'veh_kpi': kpi}
 
         
         
