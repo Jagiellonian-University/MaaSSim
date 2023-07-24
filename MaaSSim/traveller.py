@@ -7,6 +7,7 @@
 
 from enum import Enum
 import time
+import pandas as pd
 from .driver import driverEvent
 
 
@@ -106,6 +107,7 @@ class PassengerAgent(object):
         self.id = pax_id  # reference in the list of simulated passengers
         self.pax = self.sim.inData.passengers.loc[self.id].copy()  # reference to a simulated passenger
         self.platform_ids = self.pax.platforms  # list of platforms to which traveller is assigned
+        self.rdf = pd.DataFrame()
 
         self.requests = self.sim.inData.requests[self.sim.inData.requests.pax_id == pax_id]  # assign a requests
         self.request = self.requests.iloc[0]  # for the moment we consider only one request
