@@ -1,4 +1,3 @@
-################################################################################
 # Module: driver.py
 # Description: Driver agent
 # Rafal Kucharski @ TU Delft, The Netherlands
