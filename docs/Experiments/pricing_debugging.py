@@ -69,7 +69,7 @@ inData = prep_shared_rides(inData, params.shareability) # prepare schedules
 inData.sblts.rides
 
 # Solo ride-hailing
-
+#sharing
 
 
 # Nearest pickup ride-pooling nearst
