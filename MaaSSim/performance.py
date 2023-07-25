@@ -103,7 +103,7 @@ def kpi_veh(*args, **kwargs):
     ret['REVENUE'] = ret['REVENUE'] * ret['PAX_KM']
     ret.index.name = 'veh'
     #ret['COMMISSION'] = ret.apply(lambda x: sim.inData.platforms.loc[sim.inData.vehicles.loc[
-        #x.name].platform].fare, axis=1)
+        #x.name].platform].fare, axis=1) #
     
     # print karwa lo 
     
