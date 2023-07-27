@@ -10,6 +10,7 @@ from .traveller import travellerEvent
 from .driver import driverEvent
 import pandas as pd
 import matplotlib.pyplot as plt
+#from MaaSSim.shared import prep_shared_ride
 
 
 
@@ -60,6 +61,7 @@ def kpi_veh(*args, **kwargs):
     :param kwargs:
     :return: dictionary with kpi per vehicle and system-wide
     """
+    
     sim =  kwargs.get('sim', None)
     run_id = kwargs.get('run_id', None)
     simrun = sim.runs[run_id]
@@ -87,23 +89,129 @@ def kpi_veh(*args, **kwargs):
     ret['OUT'] = DECIDES_NOT_TO_DRIVE
     ret['OUT'] = ~ret['OUT'].isnull()
     ret = ret[['nRIDES', 'nREJECTED', 'OUT'] + [_.name for _ in driverEvent]].fillna(0)  # nans become 0
+    
+    rides = sim.inData.sblts.rides
 
     # meaningful names
     ret['TRAVEL'] = ret['ARRIVES_AT_DROPOFF']  # time with traveller (paid time)
     ret['WAIT'] = ret['MEETS_TRAVELLER_AT_PICKUP']  # time waiting for traveller (by default zero)
     ret['CRUISE'] = ret['ARRIVES_AT_PICKUP'] + ret['REPOSITIONED']  # time to arrive for traveller
-    ret['DRIVING_TIME'] = ret['ARRIVES_AT_PICKUP'] + ret['ARRIVES_AT_DROPOFF']  # time to arrive for traveller
+   
     ret['OPERATIONS'] = ret['ACCEPTS_REQUEST'] + ret['DEPARTS_FROM_PICKUP'] + ret['IS_ACCEPTED_BY_TRAVELLER']
     ret['IDLE'] = ret['ENDS_SHIFT'] - ret['OPENS_APP'] - ret['OPERATIONS'] - ret['CRUISE'] - ret['WAIT'] - ret['TRAVEL']
 
     ret['PAX_KM'] = ret.apply(lambda x: sim.inData.requests.loc[sim.runs[0].trips[
     sim.runs[0].trips.veh_id == x.name].pax.unique()].dist.sum() / 1000, axis=1)
-    ret['REVENUE'] = ret.apply(lambda x: sim.inData.platforms.loc[sim.inData.vehicles.loc[
-        x.name].platform].fare, axis=1)
-    ret['REVENUE'] = ret['REVENUE'] * ret['PAX_KM']
+    
+    ret['TTRAV'] = ret.index.map(lambda veh: rides.loc[veh, 'ttrav'])
     ret.index.name = 'veh'
+    
+        
+    ret['DIST'] = ret.index.map(lambda veh: rides.loc[veh, 'dist'])
+    ret.index.name = 'veh'
+    
+    # we need to analyze this code for logic
+    #ret['REVENUE'] = ret.apply(lambda x: sim.inData.platforms.loc[sim.inData.vehicles.loc[
+     #   x.name].platform].fare, axis=1)
+   # ret['REVENUE'] = ret['REVENUE'] * ret['PAX_KM']
+   # ret.index.name = 'veh'
+    
+   # ret['ttrav'] = ret.apply(lambda x: sim.inData.platforms.loc[sim.inData.vehicles.loc[
+     #   x.name].platform].fare, axis=1)
+    # synatx wrong hay value data frame se uthany ki try krty hyn lakin datafarame ais code mein mention nai ausi k liye sahred.py import krwa raha tha 
+    
+ 
+    
+    # Driving Time (# time to arrive for traveller)
+    ret['DRIVING_TIME'] = ret['ARRIVES_AT_PICKUP'] + ret['ARRIVES_AT_DROPOFF']  # time to arrive for traveller
+    ret.index.name = 'veh'
+        
+    # Driving Distance
+    ret['DRIVING_DIST'] = ret['DRIVING_TIME'] * (sim.params.speeds.ride/1000)
+    ret.index.name = 'veh'
+    
+    #ret['pickup_dist'] = ret.apply(lambda row: sim.inData.skim[veh.veh.pos][row.nodes[1]], axis=1)
+    
+    #still_available_rides['trav_dist'] = still_available_rides['dist'] + still_available_rides[
+              #  'pickup_dist']  # distance from driver's initial position to the drop off point of the last passenger
+    
+   
+     #ret['COMMISSION'] = ret.apply(lambda row: sim.inData.sblts.rides[row.name].rdf.commission.sum(), axis=1)
+    # please check this syntax we are guving wrong syntax  ret.apply(lambda x: sim.inData.platforms.loc[sim.inData.vehicles.loc[
+     #   x.name].platform].fare, axis=1)
+    
+    ret['FARE'] = ret.index.map(lambda veh: rides.loc[veh, 'fare'])
+    ret.index.name = 'veh'
+    
+    ret['COMMISSION'] = ret.index.map(lambda veh: rides.loc[veh, 'commission'])
+    ret.index.name = 'veh'
+    
+    ret['REVENUE'] = ret.index.map(lambda veh: rides.loc[veh, 'driver_revenue'])
+    ret.index.name = 'veh'
+    
+    # pickup distance
+    ret['PICKUP_DIST'] = ret['ARRIVES_AT_PICKUP'] * (sim.params.speeds.ride/1000)  # in km  # distance from driver initial position to the first pickup point
+    ret.index.name = 'veh'
+    
+    ret['TRAVEL_DIST'] = ret['DIST'] + ret['PICKUP_DIST'] # distance from driver's initial position to the drop off point of the last passenger
+    ret.index.name = 'veh'
+    
+    ret['OPERATING_COST'] = ret['TRAVEL_DIST']*(0.0005*100)
+    ret.index.name = 'veh'
+    
+    
+    ret['PROFIT'] = ret['REVENUE']- ret['OPERATING_COST']
+    ret.index.name = 'veh'
+    
+   
+
+  
+
+    
+   
+    
+ 
+   ############################################### 
+    ##### This remaining 
+  
+   
+   ####### Profit is remaining
+   # ret['profit'
+############################################################
+    
+  #  veh.rdf = pd.concat([veh.rdf, ride])
+
+  #  vehicle_to_trav_dist = veh.rdf.set_index('vehicle')['dist_trav'].to_dict()
+
+# Assuming ret is the DataFrame where you want to add the Trav_DIST column
+    #ret = pd.DataFrame(...)  # Replace ... with how you create the ret DataFrame
+
+# Add the Trav_DIST column to the ret DataFrame
+   # ret['Trav_DIST'] = ret['vehicle'].map(vehicle_to_trav_dist)
+
+# Set the index name to 'veh'
+   # ret.index.name = 'veh'
+    
+   # ret['PICKUP_DIST'] =ret.apply(lambda row: sim.inData.skim[veh.veh.pos][row.nodes[1]], axis=1)
+   # ret['PICKUP_DIST'] = ret['PICKUP_DIST']
+   # ret.index.name = 'veh'
+    
+  #  ret['ttrav'] = ret['ttrav'] 
+   # ret.index.name = 'veh'
+    
+   # ret['commission']= ret['commission']
+   # ret.index.name= 'veh'
+    #rides = sim.inData.sblts.rides
+    #pd.DataFrame(sim.vehs[i].myrides)['paxes'].to_list()
+    #ret['REVENUE'] = ret.apply(lambda row: sim.inData.sblts.rides[row.values]['driver_revenue'].to_list(), axis=1)
+    
+    #ret['REVENUE'] = ret.apply(lambda row: sim.inData.sblts.rides[row.name].rdf.driver_revenue.sum(), axis=1)
+    
+   # ret['REVENUE'] = ret.apply(lambda row: sim.vehs[row.name].rdf.driver_revenue.sum(), axis=1)
+     #_inData.sblts.rides['driver_revenue'] = _inData.sblts.rides['fare'] - _inData.sblts.rides['commission']
+    
     #ret['COMMISSION'] = ret.apply(lambda x: sim.inData.platforms.loc[sim.inData.vehicles.loc[
-        #x.name].platform].fare, axis=1) #
+        #x.name].platform].fare, axis=1)
     
     # print karwa lo 
     
@@ -111,7 +219,7 @@ def kpi_veh(*args, **kwargs):
 #     ret.apply(lambda x: print(sim.inData.platforms.loc[sim.inData.vehicles.loc[x.name].platform]))
 #     print(sim.inData.platforms.loc[sim.inData.vehicles.loc['name'].platform])
     
-    
+    #ret = ret[['REVENUE', 'COMMISSION'] + [_.name for _ in driverEvent]]
 
 
     kpi = ret.agg(['sum', 'mean', 'std'])

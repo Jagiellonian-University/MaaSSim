@@ -83,8 +83,8 @@ idle_time = []
 for i in range(1, 4):
     params.kpi = i
     sim = simulate(params = params, inData = inData, logger_level = logging.CRITICAL) # simulate
-    sim.res[0].veh_kpi.to_csv('D:/Development/GitHub-ProjectV2.0/MaaSSim/docs/tutorials/Results/Simulation/Driver/veh{}.csv'.format(i))
-    sim.res[0].pax_kpi.to_csv('D:/Development/GitHub-ProjectV2.0/MaaSSim/docs/tutorials/Results/Simulation/Driver/pax{}.csv'.format(i))
+    sim.res[0].veh_kpi.to_csv('D:/Development/GitHub-ProjectV2.0/MaaSSim/docs/tutorials/Results/Simulation/Driver/Test/veh{}.csv'.format(i))
+    sim.res[0].pax_kpi.to_csv('D:/Development/GitHub-ProjectV2.0/MaaSSim/docs/tutorials/Results/Simulation/Driver/Test/pax{}.csv'.format(i))
    # sim.res[0].veh_exp['Vehicles'] = sim.res[0].veh_exp.index
    # sim.res[0].veh_exp['ds'] = f"{i}"
     
