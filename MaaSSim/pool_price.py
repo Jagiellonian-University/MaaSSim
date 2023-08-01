@@ -56,13 +56,12 @@ def pool_price_fun(sim, veh, request, sp):
             else:
                 # select by max profit sp pick nai kr rahaa bhaii formula update kr daita hn
                 if kpi_type == 1:
-                    rf = still_available_rides[(still_available_rides['indexes_orig'].map(len) > 0)]
-                    rf_sorted = rf.sort_values(by='profit', ascending=False)
-                    my_choice = rf_sorted.iloc[0]
-                    ride = rf_sorted
+                    rf = still_available_rides[(still_available_rides['indexes_orig'].map(len) > 1)]
+                    my_choice = still_available_rides[still_available_rides["profit"]==still_available_rides["profit"].max()]
+                    #my_choice = rf[rf['profit'] == rf['profit'].max()]
+                    ride = still_available_rides[still_available_rides["profit"]==still_available_rides["profit"].max()]
 
-
-                # select by max profit on solo rides
+             # select by max profit on solo rides
                 elif kpi_type == 2:
                     rf = still_available_rides[(still_available_rides['indexes_orig'].map(len) == 1)]
                     my_choice = rf[rf['profit'] == rf['profit'].max()].iloc[0]
@@ -72,9 +71,9 @@ def pool_price_fun(sim, veh, request, sp):
                 elif kpi_type == 3:
                     rf = still_available_rides[still_available_rides['indexes_orig'].map(len) > 1]
                     my_choice = rf[rf['pickup_dist'] == rf['pickup_dist'].min()]
-                    ride = my_choice
+                    ride = rf[rf['pickup_dist'] == rf['pickup_dist'].min()]
 
-  # this is a dataframe of RDF
+          # this is a dataframe of RDF
                 veh.rdf = pd.concat([veh.rdf, ride])
 
               

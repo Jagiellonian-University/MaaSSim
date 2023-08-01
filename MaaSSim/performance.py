@@ -45,6 +45,7 @@ def kpi_pax(*args,**kwargs):
     ret['WAIT'] = ret['RECEIVES_OFFER'] + ret[
         'MEETS_DRIVER_AT_PICKUP']  # time waiting for traveller (by default zero)
     ret['OPERATIONS'] = ret['ACCEPTS_OFFER'] + ret['DEPARTS_FROM_PICKUP'] + ret['SETS_OFF_FOR_DEST']
+    ret['LOST_PATIENCE'] = ret.apply(lambda row: False if row['ARRIVES_AT_DROPOFF']>0 else True ,axis=1)
 
     kpi = ret.agg(['sum', 'mean', 'std'])
     kpi['nP'] = ret.shape[0]
