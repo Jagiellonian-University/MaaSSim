@@ -74,7 +74,11 @@ inData.sblts.rides
 sim = simulate(params = params, inData = inData,  logger_level = logging.CRITICAL) # simulate
 # Nearest pickup ride-pooling nearst
 
-
+sim.res[0].pax_exp 
+Fulfilled_requests = sim.res[0].pax_exp.LOST_PATIENCE.value_counts()[False]
+unFulfilled_requests = sim.res[0].pax_exp.LOST_PATIENCE.value_counts()[True]
+service_rate = Fulfilled_requests/(Fulfilled_requests+unFulfilled_requests)
+print('service_rate = ', service_rate*100, '%')
 
 responses = []
 avg_kpi = []

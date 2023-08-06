@@ -66,6 +66,8 @@ def kpi_veh(*args, **kwargs):
     sim =  kwargs.get('sim', None)
     run_id = kwargs.get('run_id', None)
     simrun = sim.runs[run_id]
+    #sim = veh.sim
+    #params = sim.params
     vehindex = sim.inData.vehicles.index
     df = simrun['rides'].copy()  # results of previous simulation
     DECIDES_NOT_TO_DRIVE = df[df.event == driverEvent.DECIDES_NOT_TO_DRIVE.name].veh  # track drivers out
@@ -164,6 +166,26 @@ def kpi_veh(*args, **kwargs):
     ret['PROFIT'] = ret['REVENUE']- ret['OPERATING_COST']
     ret.index.name = 'veh'
     
+    ret['LOST_PATIENCE'] = ret.apply(lambda row: False if row['ARRIVES_AT_DROPOFF']>0 else True ,axis=1)
+    #unFulfilled_requests = sim.res[0].pax_exp.LOST_PATIENCE.value_counts()[True]
+    #ret['Filled'] = ret.apply(lambda row:['ARRIVES_AT_DROPOFF'].value_count()[False])
+    #ret['Unfilled'] = ret.apply(lambda row:['ARRIVES_AT_DROPOFF'].value_count()[True])
+    #ret['SERVICE_RATE'] = ret['Filled']/(ret['Unfilled']+ret['Unfilled'])#*(100)
+    #ret.index.name = 'veh'
+   
+    #ret['Filled'] = ret.apply(lambda row:['ARRIVES_AT_DROPOFF']==1,axis=1)
+    
+   # ret.index.name = 'veh'
+    
+  # pax_exp.LOST_PATIENCE.value_counts().loc[False]
+   # ret['Unfilled'] = ret.apply(lambda row:['ARRIVES_AT_DROPOFF']==0,axis=1)
+    
+   # ret.index.name = 'veh'
+    
+    #ret['LOST_PATIENCE'] = ret['Filled']/ret['Unfilled']
+    
+   # ret.index.name = 'veh'
+   
    
 
   
