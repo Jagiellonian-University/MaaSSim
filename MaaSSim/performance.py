@@ -142,15 +142,42 @@ def kpi_veh(*args, **kwargs):
      #ret['COMMISSION'] = ret.apply(lambda row: sim.inData.sblts.rides[row.name].rdf.commission.sum(), axis=1)
     # please check this syntax we are guving wrong syntax  ret.apply(lambda x: sim.inData.platforms.loc[sim.inData.vehicles.loc[
      #   x.name].platform].fare, axis=1)
+   # d = df[df['event_s']=='ARRIVES_AT_DROPOFF']
+  #  if len(d) != 0:
+ #       d['FARE'] = d.apply(lambda row: max(row['dt'] * (sim.params.speeds.ride/1000) * platforms.loc[1].fare + platforms.loc[1].base_fare,
+                                                # platforms.loc[1].min_fare), axis=1)
+ #       ret['FARE'] = d.groupby(['veh']).sum().FARE
+    #else:
+   #     ret['FARE'] = 0
     
+    
+  
+  #  _inData.sblts.rides['fare'] = _inData.sblts.rides.apply(lambda row: sum(_inData.requests.loc[p].dist/1000 for p in row.indexes)*sp.price*(1-sp.shared_discount) if row.degree>1
+                                                            
+    #ret['REVENUE'] = ret['TRIP_FARE']*(1-platforms.loc[1].comm_rate)
+    #ret['COMMISSION'] = ret['TRIP_FARE']*(platforms.loc[1].comm_rate)#-params.platforms.discount)
+    #ret['COST'] = ret['DRIVING_DIST'] * (params.d2d.fuel_cost) # Operating Cost (OC)
+    #ret['PROFIT'] = ret['REVENUE'] - ret['COST']
+    
+    
+    #ret['COMMISSION'] = ret.index.map(lambda veh: rides.loc[veh, 'commission'])
+    #ret.index.name = 'veh'
+    ret['PAX_KM'] = ret.apply(lambda x: sim.inData.requests.loc[sim.runs[0].trips[sim.runs[0].trips.veh_id == x.name].pax.unique()].dist.sum() / 1000, axis=1)
     ret['FARE'] = ret.index.map(lambda veh: rides.loc[veh, 'fare'])
     ret.index.name = 'veh'
+        
+        
+    #ret['FARE'] = ret.apply(lambda x: sim.inData.requests.loc[sim.runs[0].trips[sim.runs[0].trips.veh_id == x.name].pax.unique()].dist.sum() / 1000 * 1.5 * (1-0.25))
     
-    ret['COMMISSION'] = ret.index.map(lambda veh: rides.loc[veh, 'commission'])
-    ret.index.name = 'veh'
     
-    ret['REVENUE'] = ret.index.map(lambda veh: rides.loc[veh, 'driver_revenue'])
-    ret.index.name = 'veh'
+    #ret.index.map(lambda veh: sum(sim.params.speeds.ride/1000)) * 1.5 * (1-0.25)
+    
+    ret['COMMISSION'] = ret['FARE']*(0.2)
+    
+    ret['REVENUE'] = ret['FARE']*(1-0.2)
+    
+    #ret['REVENUE'] = ret.index.map(lambda veh: rides.loc[veh, 'driver_revenue'])
+    #ret.index.name = 'veh'
     
     # pickup distance
     ret['PICKUP_DIST'] = ret['ARRIVES_AT_PICKUP'] * (sim.params.speeds.ride/1000)  # in km  # distance from driver initial position to the first pickup point
@@ -167,6 +194,9 @@ def kpi_veh(*args, **kwargs):
     ret.index.name = 'veh'
     
     ret['LOST_PATIENCE'] = ret.apply(lambda row: False if row['ARRIVES_AT_DROPOFF']>0 else True ,axis=1)
+    
+    #ret['Filled'] = ret.apply(lambda row:['ARRIVES_AT_DROPOFF'].value_count()[False])
+    
     #unFulfilled_requests = sim.res[0].pax_exp.LOST_PATIENCE.value_counts()[True]
     #ret['Filled'] = ret.apply(lambda row:['ARRIVES_AT_DROPOFF'].value_count()[False])
     #ret['Unfilled'] = ret.apply(lambda row:['ARRIVES_AT_DROPOFF'].value_count()[True])

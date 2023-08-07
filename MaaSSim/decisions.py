@@ -166,6 +166,14 @@ def f_decline(*args, **kwargs):
 
 
 def f_match(**kwargs):
+    """
+    for each platfrom, whenever one of the queues changes (new idle vehicle or new unserved request)
+    this procedure handles the queue and prepares transactions between drivers and travellers
+    it operates based on nearest vehicle and prepares and offer to accept by traveller/vehicle
+    :param kwargs:
+    :return:
+    """
+
     platform = kwargs.get('platform')  # platform for which we perform matching
     vehQ = platform.vehQ  # queue of idle vehicles
     reqQ = platform.reqQ  # queue of unserved requests
@@ -179,10 +187,11 @@ def f_match(**kwargs):
 
         skimQ = skimQ.drop(platform.tabu, errors='ignore')  # drop already rejected matches
 
+
         if skimQ.shape[0] == 0:
             sim.logger.warn("Nobody likes each other, "
                             "Qs {}veh; {}req; tabu {}".format(len(vehQ), len(reqQ), len(platform.tabu)))
-            break  # nobody likes each other - wait until a new request or new vehicle
+            break  # nobody likes each other - wait until new request or new vehicle
 
         vehPos, reqPos = skimQ.idxmin()  # find the closest ones
 
@@ -193,61 +202,57 @@ def f_match(**kwargs):
 
         request = requests[requests.origin == reqPos].iloc[0]
 
-        # Check if it's a solo ride (single passenger)
-        if request.sim_schedule['req_id'].dropna().nunique() == 1:
-            # If it's a solo ride, make an offer to the passenger
-            request, sim = pool_price_fun(sim, veh, request, sim.params.shareability)
+        request, sim = pool_price_fun(sim, veh, request, sim.params.shareability)
+        #print('Vehicle id =', veh_id)
+        
+        
 
-            req_id = request.name
-            simpaxes = request.sim_schedule.req_id.dropna().unique()
-            simpax = sim.pax[simpaxes[0]]  # first traveler of shared ride (he is a leader and decision-maker)
+        req_id = request.name
+        simpaxes = request.sim_schedule.req_id.dropna().unique()
+        simpax = sim.pax[simpaxes[0]]  # first traveller of shared ride (he is a leader and decision maker)
 
-            veh.update(event=driverEvent.RECEIVES_REQUEST)
+        veh.update(event=driverEvent.RECEIVES_REQUEST)
+        for i in simpaxes:
+            sim.pax[i].update(event=travellerEvent.RECEIVES_OFFER)
+
+        if simpax.veh is not None:  # the traveller already assigned (to a different platform)
+            if req_id in platform.reqQ:  # we were too late, forget about it
+                platform.reqQ.pop(platform.reqQ.index(req_id))  # pop this request (vehicle still in the queue)
+        else:
             for i in simpaxes:
-                sim.pax[i].update(event=travellerEvent.RECEIVES_OFFER)
-
-            if simpax.veh is not None:  # the traveler already assigned (to a different platform)
-                if req_id in platform.reqQ:  # we were too late, forget about it
-                    platform.reqQ.pop(platform.reqQ.index(req_id))  # pop this request (vehicle still in the queue)
+                offer_id = i
+                pax_request = sim.pax[i].request
+                if isinstance(pax_request.ttrav, int):
+                    ttrav = pax_request.ttrav
+                else:
+                    ttrav = pax_request.ttrav.total_seconds()
+                offer = {'pax_id': i,
+                         'req_id': pax_request.name,
+                         'simpaxes': simpaxes,
+                         'veh_id': veh_id,
+                         'status': 0,  # 0 -  offer made, 1 - accepted, -1 rejected by traveller, -2 rejected by veh
+                         'request': pax_request,
+                         'wait_time': mintime,
+                         'travel_time': ttrav,
+                         'fare': platform.platform.fare * sim.pax[i].request.dist / 1000}  # make an offer
+                platform.offers[offer_id] = offer  # bookkeeping of offers made by platform
+                sim.pax[i].offers[platform.platform.name] = offer  # offer transferred to
+            if veh.f_driver_decline(veh=veh):  # allow driver reject the request
+                veh.update(event=driverEvent.REJECTS_REQUEST)
+                platform.offers[offer_id]['status'] = -2
+                for i in simpaxes:
+                    sim.pax[i].update(event=travellerEvent.IS_REJECTED_BY_VEHICLE)
+                    sim.pax[i].offers[platform.platform.name]['status'] = -2
+                sim.logger.warning("pax {:>4}  {:40} {}".format(request.name,
+                                                             'got rejected by vehicle ' + str(veh_id),
+                                                             sim.print_now()))
+                platform.tabu.append((vehPos, reqPos))  # they are unmatchable
             else:
                 for i in simpaxes:
-                    offer_id = i
-                    pax_request = sim.pax[i].request
-                    if isinstance(pax_request.ttrav, int):
-                        ttrav = pax_request.ttrav
-                    else:
-                        ttrav = pax_request.ttrav.total_seconds()
-                    offer = {'pax_id': i,
-                             'req_id': pax_request.name,
-                             'simpaxes': simpaxes,
-                             'veh_id': veh_id,
-                             'status': 0,  # 0 - offer made, 1 - accepted, -1 rejected by traveler, -2 rejected by veh
-                             'request': pax_request,
-                             'wait_time': mintime,
-                             'travel_time': ttrav,
-                             'fare': platform.platform.fare * sim.pax[i].request.dist / 1000}  # make an offer
-                    platform.offers[offer_id] = offer  # bookkeeping of offers made by platform
-                    sim.pax[i].offers[platform.platform.name] = offer  # offer transferred to
-                if veh.f_driver_decline(veh=veh):  # allow driver to reject the request
-                    veh.update(event=driverEvent.REJECTS_REQUEST)
-                    platform.offers[offer_id]['status'] = -2
-                    for i in simpaxes:
-                        sim.pax[i].update(event=travellerEvent.IS_REJECTED_BY_VEHICLE)
-                        sim.pax[i].offers[platform.platform.name]['status'] = -2
-                    sim.logger.warning("pax {:>4}  {:40} {}".format(request.name,
-                                                                     'got rejected by vehicle ' + str(veh_id),
-                                                                     sim.print_now()))
-                    platform.tabu.append((vehPos, reqPos))  # they are unmatchable
-                else:
-                    for i in simpaxes:
-                        if not sim.pax[i].got_offered.triggered:
-                            sim.pax[i].got_offered.succeed()
-                    vehQ.pop(vehQ.index(veh_id))  # pop offered ones
-                    reqQ.pop(reqQ.index(req_id))  # from the queues
-
-        else:
-            # If it's not a solo ride, skip the match and update tabu to avoid rematching
-            platform.tabu.append((vehPos, reqPos))
+                    if not sim.pax[i].got_offered.triggered:
+                        sim.pax[i].got_offered.succeed()
+                vehQ.pop(vehQ.index(veh_id))  # pop offered ones
+                reqQ.pop(reqQ.index(req_id))  # from the queues
 
         platform.updateQs()
 
@@ -290,143 +295,57 @@ def f_mode(*args, **kwargs):
     return (max(pass_walk_time, veh_pickup_time) + pass_matching_time) / tt.seconds > delta
 
 
-
-
-
-
 def f_platform_choice(*args, **kwargs):
     traveller = kwargs.get('traveller')
     sim = traveller.sim
 
-    kpi = sim.params.kpi  # Get the kpi value (1, 2, or 3)
     betas = sim.params.platform_choice
     offers = traveller.offers
 
-    # Update the kind in the dataframe based on the selected kpi
-    sim.inData.requests['kind'] = kpi
+    # calc utilities
+    exps = list()
 
-    # Handle case for kpi=1
-    if kpi == 1:
-        # Calculate the profit for each offer and store it in a list of tuples (platform_id, profit)
-        profits = []
-        for platform_id, offer in offers.items():
-            profit = (offer['fare'] - (offer['wait_time'] + offer['travel_time']) * betas.Beta_cost)
-            profits.append((platform_id, profit))
+    add_opt_out = True
 
-        # Sort the offers based on the profit (descending order)
-        sorted_offers = sorted(profits, key=lambda x: x[1], reverse=True)
-
-        # Loop through the sorted offers and select the one with the highest profit first
-        for platform_id, _ in sorted_offers:
-            if platform_id == -1:
-                sim.logger.info("pax {:>4}  {:40} {}".format(traveller.id, 'chosen to opt out', sim.print_now()))
-            else:
-                sim.logger.info("pax {:>4}  {:40} {}".format(traveller.id, 'chosen platform ' + str(platform_id), sim.print_now()))
-
-            # Update the kind value in the requests DataFrame to match the selected kpi
-            sim.inData.requests.loc[traveller.id, 'kind'] = kpi
-
-            # Handle requests
-            for platform_id_, offer in offers.items():
-                if int(platform_id_) == platform_id:
-                    sim.plats[platform_id_].handle_accepted(offer['pax_id'])
-                else:
-                    sim.plats[platform_id_].handle_rejected(offer['pax_id'])
-                sim.logger.info("pax {:>4}  {:40} {}".format(traveller.id,
-                                                             "wait: {}, travel: {}, fare: {}".format(offer['wait_time'],
-                                                                                                     int(offer['travel_time']),
-                                                                                                     int(offer['fare'] * 100) / 100),
-                                                             sim.print_now()))
-            return platform_id == -1
-
-   
-
-
-    elif kpi == 3:
-        # Filter out solo rides from the offers
-        solo_offers = {key: offer for key, offer in offers.items()
-                       if traveller.sim.pax[offer['pax_id']].request.sim_schedule['req_id'].dropna().nunique() > 1}
-
-        # Calculate the probability of choosing each offer based on the remaining solo_offers
-        exps = [exp(offer['wait_time'] * betas.Beta_wait +
-                    offer['travel_time'] * betas.Beta_time +
-                    offer['fare'] * betas.Beta_cost)
-                for offer in solo_offers.values()]
-
-        p = [_ / sum(exps) for _ in exps]
-        platform_chosen = choice([-1] + list(solo_offers.keys()), 1, p=p)[0]  # random choice with p
-
-        if platform_chosen == -1:
-            sim.logger.info("pax {:>4}  {:40} {}".format(traveller.id, 'chosen to opt out',
-                                                         sim.print_now()))
-        else:
-            sim.logger.info("pax {:>4}  {:40} {}".format(traveller.id, 'chosen platform ' + str(platform_chosen),
-                                                         sim.print_now()))
-            sim.logger.info("pax {:>4}  {:40} {}".format(traveller.id, 'platform probs: ' + str(p),
-                                                         sim.print_now()))
-
-        # Handle requests
-        for platform_id, offer in solo_offers.items():
-            if int(platform_id) == platform_chosen:
-                sim.plats[platform_id].handle_accepted(offer['pax_id'])
-            else:
-                sim.plats[platform_id].handle_rejected(offer['pax_id'])
-            sim.logger.info("pax {:>4}  {:40} {}".format(traveller.id,
-                                                         "wait: {}, travel: {}, fare: {}".format(offer['wait_time'],
-                                                                                                 int(offer['travel_time']),
-                                                                                                 int(offer[
-                                                                                                         'fare'] * 100) / 100),
-                                                         sim.print_now()))
-        return platform_chosen == -1
-
-    #Hanlde kpi=2
-    else:
-        betas = sim.params.platform_choice
-        offers = traveller.offers
-
-        # calc utilities
-        exps = list()
-
-        add_opt_out = True
-
-        for platform, offer in offers.items():
-            if add_opt_out:
-                u = offer['wait_time'] * 2 * betas.Beta_wait + \
-                    offer['travel_time'] * 2 * betas.Beta_time + \
-                    offer['fare'] / 2 * betas.Beta_cost
-                exps.append(exp(u))
-                add_opt_out = False
-
-            u = offer['wait_time'] * betas.Beta_wait + \
-                offer['travel_time'] * betas.Beta_time + \
-                offer['fare'] * betas.Beta_cost
+    for platform, offer in offers.items():
+        if add_opt_out:
+            u = offer['wait_time'] * 2 * betas.Beta_wait + \
+                offer['travel_time'] * 2 * betas.Beta_time + \
+                offer['fare'] / 2 * betas.Beta_cost
             exps.append(exp(u))
+            add_opt_out = False
 
-        p = [_ / sum(exps) for _ in exps]
-        platform_chosen = choice([-1] + list(offers.keys()), 1, p=p)[0]  # random choice with p
+        u = offer['wait_time'] * betas.Beta_wait + \
+            offer['travel_time'] * betas.Beta_time + \
+            offer['fare'] * betas.Beta_cost
+        exps.append(exp(u))
 
-        if platform_chosen == -1:
-            sim.logger.info("pax {:>4}  {:40} {}".format(traveller.id, 'chosen to opt out',
-                                                         sim.print_now()))
+    p = [_ / sum(exps) for _ in exps]
+    platform_chosen = choice([-1] + list(offers.keys()), 1, p=p)[0]  # random choice with p
+
+    if platform_chosen == -1:
+        sim.logger.info("pax {:>4}  {:40} {}".format(traveller.id, 'chosen to opt out',
+                                                     sim.print_now()))
+    else:
+        sim.logger.info("pax {:>4}  {:40} {}".format(traveller.id, 'chosen platform ' + str(platform_chosen),
+                                                     sim.print_now()))
+        sim.logger.info("pax {:>4}  {:40} {}".format(traveller.id, 'platform probs: ' + str(p),
+                                                     sim.print_now()))
+
+    # handle requests
+    for platform_id, offer in offers.items():
+        if int(platform_id) == platform_chosen:
+            sim.plats[platform_id].handle_accepted(offer['pax_id'])
         else:
-            sim.logger.info("pax {:>4}  {:40} {}".format(traveller.id, 'chosen platform ' + str(platform_chosen),
-                                                         sim.print_now()))
-            sim.logger.info("pax {:>4}  {:40} {}".format(traveller.id, 'platform probs: ' + str(p),
-                                                         sim.print_now()))
+            sim.plats[platform_id].handle_rejected(offer['pax_id'])
+        sim.logger.info("pax {:>4}  {:40} {}".format(traveller.id,
+                                                     "wait: {}, travel: {}, fare: {}".format(offer['wait_time'],
+                                                                                             int(offer['travel_time']),
+                                                                                             int(offer[
+                                                                                                     'fare'] * 100) / 100),
+                                                     sim.print_now()))
+    return platform_chosen == -1
 
-        # Handle requests
-        for platform_id, offer in offers.items():
-            if int(platform_id) == platform_chosen:
-                sim.plats[platform_id].handle_accepted(offer['pax_id'])
-            else:
-                sim.plats[platform_id].handle_rejected(offer['pax_id'])
-            sim.logger.info("pax {:>4}  {:40} {}".format(traveller.id,
-                                                         "wait: {}, travel: {}, fare: {}".format(offer['wait_time'],
-                                                                                                 int(offer['travel_time']),
-                                                                                                 int(offer[
-                                                                                                         'fare'] * 100) / 100),
-                                                         sim.print_now()))
-        return platform_chosen == -1
 
 #############
 # SIMULATOR #
