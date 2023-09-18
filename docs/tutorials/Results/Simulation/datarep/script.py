@@ -3,8 +3,8 @@ import pandas as pd
 import os
 import glob
 
-column = "PROFIT"
-CSV_Startwith = "veh"
+column = "TRAVEL"
+CSV_Startwith = "pax"
 NumberOfCSV = 3
 columnValues = [0] * NumberOfCSV
 

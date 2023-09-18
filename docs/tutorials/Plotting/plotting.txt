@@ -1,0 +1,45 @@
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Load the data
+ProfitMax = pd.read_csv('D:/Development/GitHub-ProjectV2.0/MaaSSim/docs/tutorials/Plotting/ProfitMax.csv')
+PooledRide = pd.read_csv('D:/Development/GitHub-ProjectV2.0/MaaSSim/docs/tutorials/Plotting/PooledRide.csv')
+PrivateRide = pd.read_csv('D:/Development/GitHub-ProjectV2.0/MaaSSim/docs/tutorials/Plotting/PrivateRide.csv')
+
+# Set up the figure
+plt.figure(figsize=(8.5, 6.5))  # Adjusted figure size
+
+# Plot KDE and rugplot for ProfitMax
+sns.kdeplot(data=ProfitMax['REVENUE'], shade=True, color='darkblue', label='Profit Maximization')
+sns.rugplot(data=ProfitMax['REVENUE'], color='darkblue', height=0.05)
+
+# Plot KDE and rugplot for PooledRide
+sns.kdeplot(data=PooledRide['REVENUE'], shade=True, color='darkgreen', label='Pooled Rides')
+sns.rugplot(data=PooledRide['REVENUE'], color='darkgreen', height=0.05)
+
+# Plot KDE and rugplot for PrivateRide
+sns.kdeplot(data=PrivateRide['REVENUE'], shade=True, color='darkred', label='Solo Rides')
+sns.rugplot(data=PrivateRide['REVENUE'], color='darkred', height=0.05)
+
+# Set title and labels with increased font size
+plt.title('Revenue Distribution of Pricing Strategies', fontsize=16)  # Increased title font size
+plt.xlabel('Drivers', fontsize=14)  # Increased x-axis label font size
+plt.ylabel('Density', fontsize=14)  # Increased y-axis label font size
+
+# Increase font size of tick labels
+plt.xticks(fontsize=12)
+plt.yticks(fontsize=12)
+
+# Add a legend with increased label font size
+plt.legend(fontsize=12)  # Increased legend label font size
+
+# Add grid lines
+plt.grid(True, linestyle='--', alpha=0.7)
+
+# Save the figure as a high-quality PDF
+plt.savefig('D:/Development/GitHub-ProjectV2.0/MaaSSim/docs/tutorials/Plotting/revenue_distribution.pdf', bbox_inches='tight', format='pdf')
+
+# Show the plot
+plt.show()
+
